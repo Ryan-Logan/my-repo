@@ -17,7 +17,7 @@ library(tidyverse)
 
 Read in data from 5 different datasets to use
 
-```{r, echo=F}
+```{r}
 #National Parks in California
 ca <- read_csv("https://raw.githubusercontent.com/OHI-Science/data-science-training/master/data/ca.csv") 
 
@@ -53,3 +53,76 @@ ggplot2 offers many different geoms; we will use some common ones today, includi
 
 To add a geom to the plot use + operator. Because we have two continuous variables,
 let’s use geom_point() first and then assign x and y aesthetics (aes):
+
+```{r}
+ggplot(data=ca) +
+  geom_point(aes(x = year, y = visitors))
+```
+
+Notes:
+
+1. Anything you put in the ggplot() function can be seen by any geom layers that you add (i.e., *these are universal plot settings**). This includes the x and y axis you set up in aes().
+2. You can also specify aesthetics for a given geom independently of the aesthetics defined globally in the ggplot() function.
+3. The + sign used to add layers must be placed at the end of each line containing a layer. If, instead, the + sign is added in the line before the other layer, ggplot2 will not add the new layer and will return an error message.
+
+The previous figure isnt very useful because we cant tell the parks apart,  so we add color:
+
+```{r}
+ggplot(data= ca)+
+  geom_point(aes(x = year, y= visitors, color= park_name))
+
+```
+
+# Customizing Plots
+
+Add axis labels, title, change background with theme, remove legend title 
+
+```{r}
+ggplot(data = ca) +
+    geom_point(aes(x = year, y = visitors, color = park_name)) +
+    labs(x = "Year",
+       y = "Visitation",
+       title = "California National Park Visitation") +
+    theme_classic() +
+    theme(legend.title=element_blank())
+```
+
+Southeast dataset
+
+1. Using the se dataset, make a scatterplot showing visitation to all national parks in the Southeast region with color identifying individual parks
+
+```{r}
+ggplot(data= se) +
+  geom_point(aes(x = year, y = visitors, color= park_name))
+```
+
+2. Change the plot so that color indicates state.
+
+```{r}
+ggplot(data= se) +
+  geom_point(aes(x = year, y = visitors, color= state))
+```
+
+3. Customize by adding your own title and theme. You can also change the text sizes and angles. Try applying a 45 degree angle to the x-axis. Use your cheatsheet!
+
+```{r}
+ggplot(data= se) +
+  geom_point(aes(x = year, y = visitors, color= state)) + 
+  labs(x = "Year",
+       y= "Visitors",title = "Southeast parks visitation") +
+  theme_classic()+
+  theme(legend.title=element_blank(),
+        axis.text.x = element_text(angle= 45, hjust = 1, size = 14))
+  
+```
+
+
+
+
+
+
+
+
+
+
+
