@@ -9,3 +9,47 @@ output: html_document
 
 Reluctantly learning ggplot2, here we gooo
 
+Install tidyverse, which contains ggplot2
+
+```{r}
+library(tidyverse)
+```
+
+Read in data from 5 different datasets to use
+
+```{r, echo=F}
+#National Parks in California
+ca <- read_csv("https://raw.githubusercontent.com/OHI-Science/data-science-training/master/data/ca.csv") 
+
+#Acadia National Park
+acadia <- read_csv("https://raw.githubusercontent.com/OHI-Science/data-science-training/master/data/acadia.csv")
+
+#Southeast US National Parks
+se <- read_csv("https://raw.githubusercontent.com/OHI-Science/data-science-training/master/data/se.csv")
+
+#2016 Visitation for all Pacific West National Parks
+visit_16 <- read_csv("https://raw.githubusercontent.com/OHI-Science/data-science-training/master/data/visit_16.csv")
+
+#All Nationally designated sites in Massachusetts
+mass <- read_csv("https://raw.githubusercontent.com/OHI-Science/data-science-training/master/data/mass.csv")
+```
+
+## Plotting
+
+ggplot likes data in the ‘long’ format: i.e., a column for every dimension, and a row for every observation. Well structured data will save you lots of time when making figures with ggplot.
+
+First use National Park Visitation dataset:
+
+```{r}
+head(ca)
+
+```
+
+use the ggplot() function and bind the plot to a specific data frame using the data argument
+ ggplot(data = ca)
+Then add geoms(), graphical representation of the data in the plot (points, lines, bars, etc.)
+
+ggplot2 offers many different geoms; we will use some common ones today, including: * geom_point() for scatter plots, dot plots, etc. * geom_bar() for bar charts * geom_line() for trend lines, time-series, etc.
+
+To add a geom to the plot use + operator. Because we have two continuous variables,
+let’s use geom_point() first and then assign x and y aesthetics (aes):
