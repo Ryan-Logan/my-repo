@@ -116,10 +116,76 @@ ggplot(data= se) +
   
 ```
 
+# Faceting
+
+ggplot has a special technique called _faceting_ that allows the user to split one plot into multiple plots based on data in the dataset. We will use it to make a plot of park visitation by state:
+
+```{r}
+ggplot(data=se)+
+  geom_point(aes(x = year, y = visitors)) +
+  facet_wrap(~ state)
+```
+
+We can now make the faceted plot by splitting further by park using park_name (within a single plot):
+
+```{r}
+ggplot(data=se) +
+  geom_point(aes(x = year, y = visitors, color = park_name)) +
+  facet_wrap(~ state, scales = "free")
+```
+
+# Geometric objects 
+## geoms()
+
+You can use different geoms to plot the same data. To change the geom in your plot, change the geom function that you add to ggplot(). Let’s look at a few ways of viewing the distribution of annual visitation
+
+```{r}
+ggplot(data= se) +
+  geom_jitter(aes(x = year, y = visitors, color = park_name),
+              width = 0.1, alpha = 0.4) +
+  theme(legend.position = "none") + 
+  coord_flip()
+```
 
 
+```{r}
+ggplot(data= se, aes(x = park_name, y = visitors)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust= 1))
+```
 
+However, none of these are great for visualizing data over time. We can use geom_line() in the same way we used geom_point
 
+```{r}
+ggplot(data= se, aes(x = year, y = visitors, color = park_name)) +
+  geom_line()
+```
+
+To display multiple geoms in the same plot, add multiple geom functions to ggplot():
+
+```{r}
+ggplot(data = acadia) +
+  geom_point(aes(x = year, y = visitors)) +
+  geom_line(aes(x = year, y = visitors)) +
+  geom_smooth(aes(x = year, y = visitors)) +
+  labs(title = "Acadia National Park Visitation",
+       y = "Visitation",
+       x = "Year") +
+  theme_classic()
+```
+
+If you place mappings in a geom function, ggplot2 will treat them as local mappings for the layer. It will use these mappings to extend or overwrite the global mappings for that layer only. This makes it possible to display different aesthetics in different layers.
+
+```{r}
+ggplot(data = acadia, aes(x = year, y = visitors)) +
+  geom_point() +
+  geom_line() +
+  geom_smooth(color = "red") +
+  labs(title = "Acadia National Park Visitation",
+       y = "Visitation",
+       x = "Year") +
+  theme_classic()
+```
 
 
 
