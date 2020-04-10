@@ -1,0 +1,11 @@
+---
+title: "Graphics with ggplot2"
+author: "Ryan"
+date: "4/10/2020"
+output: html_document
+---
+
+# Learning ggplot2
+
+Reluctantly learning ggplot2, here we gooo
+
