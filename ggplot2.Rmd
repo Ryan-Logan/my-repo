@@ -190,7 +190,41 @@ ggplot(data = acadia, aes(x = year, y = visitors)) +
 ```
 
 
+# Bar Charts
+
+```{r}
+ggplot(data= visit_16, aes(x = state)) +
+  geom_bar()
+```
 
 
+There’s one more piece of magic associated with bar charts. You can colour a bar chart using either the color aesthetic, or, more usefully, fill:
 
+```{r}
+ggplot(data= visit_16, aes(x = state, y= visitors, fill = park_name)) +
+  geom_bar(stat = "identity") +
+  theme_classic()
+```
 
+The stacking is performed automatically by the *position* adjustment specified by the position argument. If you don’t want a stacked bar chart, you can use "dodge".
+
+```{r}
+ggplot(data= visit_16, aes(x = state, y= visitors, fill = park_name)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  theme_classic()
+```
+
+### Challenge
+Here are some ideas:
+
+Flip the x and y axes.
+Change the color palette used
+Use scale_x_discrete to change the x-axis tick labels to the full state names (Arizona, Colorado, etc.)
+Make a bar chart using the Massachussets dataset (mass) and find out how many parks of each type are in the state.
+
+```{r}
+ggplot(data= mass) + 
+  geom_bar(aes(x = type,fill = park_name)) + 
+  labs(x = "", y = "") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 7))
+```
