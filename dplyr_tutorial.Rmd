@@ -71,5 +71,195 @@ newdat <- filter(gapminder, country == "Brazil", year >= 1987 & year <= 2007)
 mean(newdat$lifeExp)
 ```
 
+# select()
+## Subset data column-wise (by column, variable)
+
+Example:
+```{r}
+select(gapminder, year, country, lifeExp)
+```
+
+Or whole dataframe but remove certain rows:
+```{r}
+select(gapminder, -continent, -lifeExp)
+```
+
+# Use selct() and filter() together
+
+```{r}
+gap_cambodia <- filter(gapminder, country == "Cambodia")
+gap_cambodia2 <- select(gap_cambodia, -continent, -lifeExp)
+```
+
+However, naming them and keeping track of them gets super cumbersome, which means more time to understand what’s going on and opportunities for confusion or error.
+
+That's where piping comes in:
+
+# Pipe operator %>%
+## The RStudio keyboard shortcut: Ctrl + Shift + M
+
+```{r}
+gapminder %>% head()
+```
+
+This pipe operator takes the thing on the left-hand-side and **pipes** it into the function call on the right-hand-side. It literally drops it in as the *first* argument
+
+```{r}
+gapminder %>% head(3)
+```
+
+**When you see %>%, think "and then"**
+
+We can use the pipe to chain two operations together:
+
+```{r}
+gap_cambodia <- gapminder %>% #take gapminder data and then
+  filter(country == "Cambodia") %>% # filter Cambodia rows and then 
+  select(-continent, -lifeExp) # remove continent and lifeExp columns
+```
 
 
+# mutate() adds new variables
+
+we want to know each country’s annual GDP. We can multiply pop by gdpPercap to create a new column named gdp.
+
+```{r}
+gapminder %>% 
+  mutate(gdp = pop * gdpPercap)
+```
+
+Calculate the population in thousands for all Asian countries in the year 2007 and add it as a new column.
+
+
+```{r}
+gapminder %>% 
+  filter(continent == "Asia", year == 2007) %>% 
+  mutate(pop_thou = pop / 1000)
+```
+
+# groub_by() operates on groups
+
+What if we wanted to know the total population on each continent in 2002? Answering this question requires a grouping variable.
+
+By using group_by() we can set our grouping variable to continent and create a new column called cont_pop that will add up all country populations by their associated continents:
+
+```{r}
+gapminder %>% 
+  filter(year == 2002) %>% #use gapminder data and keep only 2002 and then
+  group_by(continent) %>% #group 2002 data by continent and then
+  mutate(cont_pop = sum(pop)) #add each contries pop in that continent
+```
+
+
+What if we don’t care about the other columns and we only want each continent and their population in 2002? Here’s the next function:
+
+# summarize() with group_by()
+
+We want to operate on a group, but actually collapse or distill the output from that group. The summarize() function will do that for us.
+
+```{r}
+gapminder %>% 
+  group_by(continent) %>% 
+  summarise(cont_pop = sum(pop)) %>% 
+  ungroup()
+```
+
+So summarise() will actually only keep the columns that are grouped_by or summarized.
+ungroup() removes the grouping and it’s good to get in the habit of using it after a group_by()
+
+We can use more than one grouping variable. Let’s get total populations by continent and year.
+```{r}
+gapminder %>% 
+  group_by(continent, year) %>% 
+  summarise(cont_pop = sum(pop)) %>% 
+  ungroup()
+```
+
+
+# arrange() orders rows within columns
+
+This is ordered alphabetically, which is cool. But let’s say we wanted to order it in ascending order for year. The dplyr function is arrange().
+
+```{r}
+gapminder %>% 
+  group_by(continent, year) %>% 
+  summarise(cont_pop = sum(pop)) %>% 
+  arrange(year)
+```
+
+What is the maximum GDP per continent across all years?
+
+My answer:
+```{r}
+max_gdp <- gapminder %>% 
+  mutate(gdp = pop * gdpPercap) %>% 
+  group_by(continent) %>% 
+  summarize(max(gdp))
+```
+Tutorial answer:
+```{r}
+gapminder %>%
+  mutate(gdp = pop * gdpPercap) %>%
+  group_by(continent) %>%
+  mutate(max_gdp = max(gdp)) %>%
+  filter(gdp == max_gdp)
+  
+```
+Both Correct
+
+Problem ex:
+1. arrange your data frame in descending order (opposite of what we’ve done). Expect that this is possible: ?arrange
+2. save your data frame as a variable
+3. find the maximum life expectancy for countries in Asia. What is the earliest year you encounter? The latest? Hint: you can use or base::max and dplyr::arrange()…
+
+4. Knit your RMarkdown file, and sync it to GitHub (pull, stage, commit, push)
+
+```{r}
+yr <- gapminder %>% 
+  filter(continent == "Asia") %>% #filter rows of asian countries and then
+  group_by(country) %>% #group by each country and then
+  filter(lifeExp == max(lifeExp)) %>% #filter each country by the max life expectency, and then
+  arrange(desc(year)) #arrange rows by desceding year
+```
+
+
+
+# Joining datasets
+
+```{r}
+## read in the data. (same URL as yesterday, with co2.csv instead of gapminder.csv)
+co2 <- read_csv("https://raw.githubusercontent.com/OHI-Science/data-science-training/master/data/co2.csv")
+
+## explore
+co2 %>% head()
+co2 %>% dim() # 12
+
+## create new variable that is only 2007 data
+gap_2007 <- gapminder %>%
+  filter(year == 2007) 
+gap_2007 %>% dim() # 142  
+
+## left_join gap_2007 to co2
+lj <- left_join(gap_2007, co2, by = "country")
+
+## explore
+lj %>% dim() #142
+lj %>% summary() # lots of NAs in the co2_2017 columm
+lj %>% View() 
+
+## right_join gap_2007 and co2
+rj <- right_join(gap_2007, co2, by = "country")
+
+## explore
+rj %>% dim() # 12
+rj %>% summary()
+rj %>% View() 
+
+## full_join gap_2007 and co2
+fj <- full_join(gap_2007, co2, by = "country")
+
+## explore
+fj %>% dim() # 147
+fj %>% summary()
+fj %>% View() 
+```
