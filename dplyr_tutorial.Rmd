@@ -1,0 +1,75 @@
+---
+title: "gapmider-wrangle"
+author: "Ryan"
+date: "4/13/2020"
+output: html_document
+---
+
+# Tidy Data Tutorial
+##dplyr package
+
+```{r}
+library(tidyverse) # install tidyverse package
+```
+
+We will use the read_csv() function from the readr package (part of the tidyverse)
+Note: read_csv works with local filepaths as well, you could use one from your computer.
+```{r}
+gapminder <- readr::read_csv('https://raw.githubusercontent.com/OHI-Science/data-science-training/master/data/gapminder.csv')
+```
+
+Explore the dataset a bit
+
+```{r}
+head(gapminder) # show the first and last 6 rows
+tail(gapminder)
+
+head(gapminder, 12) # show the first or last x number of rows
+tail(gapminder, 10)
+
+# str() will provide a sensible description of almost anything: when in      doubt, inspect using str() on some of the recently created objects to get   some ideas about what to do next.
+
+str(gapminder)
+
+summary(gapminder)
+
+library(skimr)
+skim(gapminder)
+```
+
+# dplyr Basics
+
+There are five dplyr functions that you will use to do the vast majority of data manipulations:
+
+1. filter()
+  Pick observations by their values
+2. select()
+  Pick variables by their names
+3. mutate()
+  Create new variables wtih functions of existing variables
+4. summarise()
+  Collapse many values down to a single summary
+5. arrange()
+  Reorder the rows
+
+These can all be used in conjunction with group_by(), which changes the scope of each function from operating on the entire dataset to operating on it group-by-group.
+
+-The first argument is a data frame.
+-The subsequent arguments describe what to do with the data frame. You can refer to columns in the data frame directly without using $.
+-The result is a new data frame.
+
+# filter() 
+## Subset data row-wise (by rows)
+
+A few examples:
+```{r}
+filter(gapminder, lifeExp < 29)
+filter(gapminder, country == "Mexico")
+filter(gapminder, country %in% c("Mexico", "Peru"))
+filter(gapminder, country == "Mexico", year == 2002)
+newdat <- filter(gapminder, country == "Brazil", year >= 1987 & year <= 2007)
+mean(newdat$lifeExp)
+```
+
+
+
