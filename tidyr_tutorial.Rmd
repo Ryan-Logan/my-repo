@@ -1,0 +1,191 @@
+---
+title: 'gapminder-wrangle: tidyr()'
+author: "Ryan"
+date: "4/15/2020"
+output: html_document
+---
+
+# Tidy Data Tutorial
+##tidyr package
+
+```{r}
+library(tidyverse) # install tidyverse package
+```
+
+Most common functions:
+
+1. gather()
+  turn colummns into rows
+2. spread()
+  turn rows into columns
+3. separate()
+  turn a character column into multipl columns
+4. unite()
+  turn multiple character columns into a single column
+  
+  
+# Gapminder dataset
+
+Same data as before, but this time in a wide format, that is not 'tidy'
+
+```{r}
+# wide format:
+
+gap_wide <- read_csv('https://raw.githubusercontent.com/OHI-Science/data-science-training/master/data/gapminder_wide.csv')
+
+# long format:
+
+gapminder <- readr::read_csv('https://raw.githubusercontent.com/OHI-Science/data-science-training/master/data/gapminder.csv')
+
+```  
+  
+Question: let’s talk this through together. If we’re trying to turn the gap_wide format into gapminder format, what structure does it have that we like? And what do we want to change?
+
+1. We like the continent and country columns. We won’t want to change those.
+2. We want 1 column identifying the variable name (tidyr calls this a ‘key’), and 1 column for the data (tidyr calls this the ’value’).
+3. We actually want 3 different columns for variable: gdpPercap, lifeExp, and pop.
+4. We would like year as a separate column.  
+
+
+Let’s get it to long format. We’ll have to do this in 2 steps. The first step is to take all of those column names (e.g. lifeExp_1970) and make them a variable in a new column, and transfer the values into another column. Let’s learn by doing:
+
+Let’s have a look at gather()’s help
+  
+```{r}
+?gather()
+```
+
+
+Question: What is our key-value pair?
+
+We need to name two new variables in the key-value pair, one for the key, one for the value. It can be hard to wrap your mind around this, so let’s give it a try. Let’s name them obstype_year and obs_values.
+
+Here’s the start of what we’ll do:
+
+```{r}
+gap_long <- gap_wide %>% 
+  gather(key   = obstype_year,
+         value = obs_values)
+head(gap_long)
+tail(gap_long)
+```
+
+
+We have reshaped our dataframe but this new format isn’t really what we wanted.
+
+What went wrong? Notice that it didn’t know that we wanted to keep continent and country untouched; we need to give it more information about which columns we want reshaped. We can do this in several ways.
+
+One way is to identify the columns is by name. Listing them explicitly can be a good approach if there are just a few. But in our case we have 30 columns. I’m not going to list them out here since there is way too much potential for error if I tried to list gdpPercap_1952, gdpPercap_1957, gdpPercap_1962 and so on. But we could use some of dplyr’s awesome helper functions — because we expect that there is a better way to do this!
+
+
+```{r}
+gap_long <- gap_wide %>% 
+  gather(key   = obstype_year,
+         value = obs_values,
+         dplyr::starts_with('pop'),
+         dplyr::starts_with('lifeExp'),
+         dplyr::starts_with('gdpPercap'))  #here i'm listing all the columns to use in gather
+
+str(gap_long)
+head(gap_long)
+tail(gap_long)
+```
+
+Success! And there is another way that is nice to use if your columns don’t follow such a structured pattern: you can exclude the columns you don’t want.
+
+```{r}
+gap_long <- gap_wide %>% 
+  gather(key   = obstype_year,
+         value = obs_values,
+         -continent, -country)
+
+str(gap_long)
+head(gap_long)
+tail(gap_long)
+```
+
+To recap:
+
+Inside gather() we first name the new column for the new ID variable (obstype_year), the name for the new amalgamated observation variable (obs_value), then the names of the old observation variable. We could have typed out all the observation variables, but as in the select() function (see dplyr lesson), we can use the starts_with() argument to select all variables that starts with the desired character string. Gather also allows the alternative syntax of using the - symbol to identify which variables are not to be gathered (i.e. ID variables).
+
+OK, but we’re not done yet. obstype_year actually contains two pieces of information, the observation type (pop,lifeExp, or gdpPercap) and the year. We can use the separate() function to split the character strings into multiple variables.
+
+?separate –> the main arguments are separate(data, col, into, sep ...). So we need to specify which column we want separated, name the new columns that we want to create, and specify what we want it to separate by. Since the obstype_year variable has observation types and years separated by a _, we’ll use that.
+
+```{r}
+gap_long <- gap_wide %>% 
+  gather(key = obstype_year,
+         value = obs_values,
+         -continent, -country) %>% 
+  separate(obstype_year,
+           into = c('obs_type','year'),
+           sep = "_",
+           convert = TRUE) # this ensures that the year column is an integer rather than a character
+```
+
+Excellent. This is long format: every row is a unique observation. Yay!
+
+# Plotting long format data
+
+The long format is the preferred format for plotting with ggplot2. Let’s look at an example by plotting just Canada’s life expectancy.
+
+```{r}
+canada_df <- gap_long %>% 
+  filter(obs_type == "lifeExp",
+         country == "Canada")
+
+ggplot(canada_df, aes(x = year, y = obs_values)) +
+  geom_line()
+```
+
+We can also look at all countries in the Americas:
+
+```{r}
+life_df <- gap_long %>% 
+  filter(obs_type == "lifeExp",
+         continent == "Americas")
+
+ggplot(life_df, aes(x = year, y = obs_values, color = country)) +
+  geom_line()
+```
+
+# 7.5 Exercise
+
+Using gap_long, calculate and plot the the mean life expectancy for each continent over time from 1982 to 2007. Give your plot a title and assign x and y labels. Hint: do this in two steps. First, do the logic and calculations using dplyr::group_by() and dplyr::summarize(). Second, plot using ggplot().
+
+```{r}
+mean_exp <- gap_long %>% 
+  filter(obs_type == "lifeExp",
+         year > 1980) %>% # take gap_long and keep lifeExp rows for greater than 1980, and then
+  group_by(continent, year) %>% #group the data by contienent and year and then
+  summarize(avg_exp = mean(obs_values)) %>% #summarize the average of each contitnent and year and then ungroup the data
+  ungroup()
+
+ggplot(mean_exp, aes(x = year, y = avg_exp, color= continent)) +
+  geom_line() + 
+  labs(title = "Mean Life Expectancy",
+       x = "Year",
+       y = "Age (years)")
+
+# Additional customization
+
+ggplot(mean_exp, aes(x = year, y = avg_exp, color= continent)) +
+  geom_line() + 
+  labs(title = "Mean Life Expectancy",
+       x = "Year",
+       y = "Age (years)") +
+  theme_classic() + 
+  scale_color_brewer(palette = "Set1")
+```
+
+
+
+
+
+
+
+
+
+
+
+
