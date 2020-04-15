@@ -178,13 +178,32 @@ ggplot(mean_exp, aes(x = year, y = avg_exp, color= continent)) +
   scale_color_brewer(palette = "Set1")
 ```
 
+# 7.6 spread()
+
+Alright! Now just to double-check our work, let’s use the opposite of gather() to spread our observation variables back to the original format with the aptly named spread(). You pass spread() the key and value pair, which is now obs_type and obs_values.
+
+```{r}
+gap_normal <- gap_long %>% 
+  spread(obs_type, obs_values)
+
+```
 
 
+Exercise
 
+Convert gap_long all the way back to gap_wide. Hint: Do this in 2 steps. First, create appropriate labels for all our new variables (variable_year combinations) with the opposite of separate: tidyr::unite(). Second, spread() that variable_year column into wider format.
 
+```{r}
+head(gap_long) # remember the columns
 
+gap_wide_new <- gap_long %>% 
+  # first unite obs_type and year into a new column called var_names. Separate by _
+  unite(col = var_names, obs_type, year, sep = "_") %>% 
+  # then spread var_names out by key-value pair.
+  spread(key = var_names, value = obs_values)
+str(gap_wide_new)
 
-
+```
 
 
 
