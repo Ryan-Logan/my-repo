@@ -486,7 +486,7 @@ world <- sf::st_wrap_dateline(world,
 # Plot code
 ggplot(world) + 
   geom_sf() + 
-  coord_sf(crs = "+proj=moll")
+  coord_sf(crs = "+proj=robin")
 
 # from coord_sf() help file:
 library(maps)
@@ -523,6 +523,12 @@ ggplot(mpg) +
 Further adjustments can be done in the end to get exactly the look you want
 
 ```{r}
+
+#library(extrafont) # add additional fonts to choose from
+#font_import(prompt=FALSE)
+loadfonts(device = "win")
+windowsFonts() #show what fonts are available
+
 ggplot(mpg) + 
   geom_bar(aes(y = class)) + 
   facet_wrap(~year) + 
@@ -533,6 +539,7 @@ ggplot(mpg) +
   scale_x_continuous(expand = c(0, NA)) + 
   theme_minimal() + 
   theme(
+    text = element_text('Tahoma'),
     strip.text = element_text(face = 'bold', hjust = 0),
     plot.caption = element_text(face = 'italic'),
     panel.grid.major = element_line('white', size = 0.5),
@@ -541,7 +548,7 @@ ggplot(mpg) +
     panel.ontop = TRUE
   )
 
-# in theme(), text = element_text('Avenir Next Condensed') did not work, error says font family not found in Windows font database, so I removed it from the code
+# in theme(), text = element_text('Avenir Next Condensed') did not work, error says font family not found in Windows font database
 
 ```
 
@@ -563,6 +570,7 @@ ggplot(mpg) +
        y = NULL)
 ```
 
+# Webinar Part II (https://www.youtube.com/watch?v=0m4yywqNPVY&t=7s)
 ## Extensions
 While ggplot2 comes with a lot of batteries included, the extension ecosystem 
 provides priceless additinal features
@@ -598,12 +606,15 @@ p1 + p2 + p3
 p_all <- (p1 | p2) / 
             p3
 p_all + plot_layout(guides = 'collect')
-p_all & theme(legend.position = 'none')
+p_all & theme(legend.position = 'none') # the '&' symbol allows you to add ggplot2 elements (theme(), geom_x()) to all subplots in patchwork. Here we turn off the legend to all subplots in one single line
 p_all <- p_all & theme(legend.position = 'none')
+
+# Can add labels to each plot
 p_all + plot_annotation(
   title = 'Mammalian sleep patterns',
   tag_levels = 'A'
 )
+
 ```
 
 #### Excercises
@@ -616,12 +627,19 @@ the middle plot takes up half of the total space:
 ```{r}
 p <- ggplot(mtcars) + 
   geom_point(aes(x = disp, y = mpg))
-p + p + p
+
+p_tot <- p + p + p
+p_tot + plot_layout(widths = c(1,2,1))
+
+# can also change widths using units of measurements for specific sizes, unit() is from grid
+p_tot + plot_layout(widths = unit(c(5,1,1), c('cm', 'null', 'null')))
+
+# now first plot will have fixed width of 5 cm
 ```
 
 * * *
 
-The `&` operator can be used with any type of ggplot2 object, not just themes.
+The `&` operator can be used with any type of ggplot2 object, not just themes. It usually is because you want to modify everything at once in themes(), but can be used with others.
 Modify the code below so the two plots share the same y-axis (same limits)
 
 ```{r}
@@ -629,7 +647,7 @@ p1 <- ggplot(mtcars[mtcars$gear == 3,]) +
   geom_point(aes(x = disp, y = mpg))
 p2 <- ggplot(mtcars[mtcars$gear == 4,]) + 
   geom_point(aes(x = disp, y = mpg))
-p1 + p2
+p1 + p2 & scale_y_continuous(limits = c(10, 40))
 ```
 
 * * *
@@ -700,6 +718,12 @@ matched by their position (first row of 4 cyl is matched to first row of 5 cyl
 etc.). This is clearly wrong here (why?). Add a mapping to the `group` aesthetic
 to ensure that points do not move between the different states.
 
+```{r}
+ggplot(mpg) + 
+  geom_point(aes(x = displ, y = hwy, group = seq_len(nrow(mpg)))) + 
+  ggtitle("Cars with {closest_state} cylinders") + 
+  transition_states(factor(cyl))
+```
 * * *
 
 In the presence of discrete aesthetic mappings (`colour` below), the group is
@@ -728,7 +752,8 @@ mpg2 <- tidyr::pivot_longer(mpg, c(cty,hwy))
 ggplot(mpg2) + 
   geom_point(aes(x = displ, y = value)) + 
   ggtitle("{if (closest_state == 'cty') 'Efficiency in city' else 'Efficiency on highway'}") + 
-  transition_states(name)
+  transition_states(name) +
+  ease_aes(y = 'cubic-in-out')
 ```
 
 ### Annotation
@@ -778,6 +803,16 @@ points_to_label <- sample(nrow(mtcars), 10)
 ggplot(mtcars2, aes(x = disp, y = mpg)) + 
   geom_point() + 
   geom_text_repel(aes(label = label))
+
+ggplot(mtcars2, aes(x = disp, y = mpg)) + 
+  geom_point() + 
+  geom_text_repel(aes(label = label), data= mtcars2[points_to_label,])
+#But with this, the labels are overlapping other points that are not labelled becasue the layer doenst know anything about the other points and doesnt know not to overlap them
+
+mtcars2$label[-points_to_label] <- ""
+ggplot(mtcars2, aes(x = disp, y = mpg)) + 
+  geom_point() + 
+  geom_text_repel(aes(label = label), data= mtcars2[points_to_label,])
 ```
 
 * * *
@@ -790,7 +825,7 @@ mtcars2$label <- ""
 mtcars2$label[1:10] <- rownames(mtcars2)[1:10]
 ggplot(mtcars2, aes(x = disp, y = mpg)) + 
   geom_point() + 
-  geom_text_repel(aes(label = label))
+  geom_text_repel(aes(label = label), direction = 'y')
 ```
 
 * * *
@@ -799,21 +834,47 @@ ggforce comes with 4 different types of mark geoms. Try them all out in the code
 below:
 
 ```{r}
+library(concaveman)
 ggplot(mtcars, aes(x = disp, y = mpg)) +
   geom_point() + 
   geom_mark_ellipse(aes(filter = gear == 4,
                         label = '4 gear cars'))
+ggplot(mtcars, aes(x = disp, y = mpg)) +
+  geom_point() + 
+  geom_mark_rect(aes(filter = gear == 4,
+                        label = '4 gear cars'))
+ggplot(mtcars, aes(x = disp, y = mpg)) +
+  geom_point() + 
+  geom_mark_circle(aes(filter = gear == 4,
+                        label = '4 gear cars'))
+ggplot(mtcars, aes(x = disp, y = mpg)) +
+  geom_point() + 
+  geom_mark_hull(aes(filter = gear == 4,
+                        label = '4 gear cars'))
+
+#Can also put multiple on same graph
+
+ggplot(mtcars, aes(x = disp, y = mpg)) +
+  geom_point() + 
+  geom_mark_hull(aes(fill = factor(gear), label= gear), concavity = 5)
 ```
 
+Also reccommends to look into **gghighlight** - allows you to draw attention to aspects other than with text 
+
 ### Networks
-ggplot2 has been focused on tabular data. Network data in any shape and form is
-handled by ggraph
+ggplot2 has been focused on tabular data. Network data in any shape and form is handled by ggraph
 
 ```{r}
 library(ggraph)
 library(tidygraph)
 graph <- create_notable('zachary') %>% 
   mutate(clique = as.factor(group_infomap()))
+
+ggraph(graph) + 
+  geom_edge_link() + 
+  geom_node_point(aes(color = clique), size = 2)
+
+
 ggraph(graph) + 
   geom_mark_hull(aes(x, y, fill = clique)) + 
   geom_edge_link() + 
@@ -843,6 +904,11 @@ for an overview of the different layouts.
 ggraph(graph) + 
   geom_edge_link() + 
   geom_node_point(aes(colour = clique), size = 3)
+
+ggraph(graph, layout = 'gem') + 
+  geom_edge_link() + 
+  geom_node_point(aes(colour = clique), size = 3)
+
 ```
 
 * * *
@@ -855,6 +921,18 @@ highschool_gr <- as_tbl_graph(highschool)
 ggraph(highschool_gr) + 
   geom_edge_link() + 
   geom_node_point()
+
+ggraph(highschool_gr) + 
+  geom_edge_parallel() + 
+  geom_node_point()
+
+ggraph(highschool_gr) + 
+  geom_edge_bend() + 
+  geom_node_point()
+
+ggraph(highschool_gr) + 
+  geom_edge_fan() + 
+  geom_node_point()
 ```
 
 Faceting works in ggraph as it does in ggplot2, but you must choose to facet by
@@ -864,7 +942,8 @@ variable (using `facet_edges()`)
 ```{r}
 ggraph(highschool_gr) + 
   geom_edge_fan() + 
-  geom_node_point()
+  geom_node_point() +
+  facet_edges(~ year)
 ```
 
 ### Looks
@@ -882,6 +961,7 @@ p <- ggplot(mtcars, aes(mpg, wt)) +
     caption = 'Source: It’s mtcars — everyone uses it'
   )
 library(hrbrthemes)
+hrbrthemes::import_roboto_condensed()
 p + 
   scale_colour_ipsum() + 
   theme_ipsum()
@@ -926,6 +1006,8 @@ ggplot(pie) +
   theme(legend.position = 'top', 
         legend.justification = 'left')
 ```
+
+Can also use ggforce() to accomplish same goal
 
 ```{r}
 ggplot(pie) + 
