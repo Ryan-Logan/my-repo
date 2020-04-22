@@ -249,8 +249,14 @@ Scales define how the mapping you specify inside `aes()` should happen. All
 mappings have an associated scale even if not specified.
 
 ```{r}
+#paletteer is package that has hundreds of differe color pallets that can easily be used with ggplot
+library(paletteer) 
+paletteer::palettes_d_names # to see list of all palette names for discrete (categorical) vaariables
+paletteer::palettes_c_names # to see list of all palette names for continuous vaariables
+
 ggplot(mpg) + 
-  geom_point(aes(x = displ, y = hwy, colour = class))
+  geom_point(aes(x = displ, y = hwy, colour = class)) +
+  scale_color_paletteer_d("LaCroixColoR::Tangerine")
 ```
 
 take control by adding one explicitly. All scales follow the same naming 
@@ -336,8 +342,11 @@ Modify the code below so that colour is no longer mapped to the discrete `class`
 variable, but to the continuous `cty` variable. What happens to the guide?
 
 ```{r}
+
+
 ggplot(mpg) + 
-  geom_point(aes(x = displ, y = hwy, colour = cty, size = cty))
+  geom_point(aes(x = displ, y = hwy, colour = cty, size = cty)) +
+  scale_color_paletteer_c("gameofthrones::lannister")
 ```
 
 * * *
@@ -351,6 +360,7 @@ guide type?
 ```{r}
 ggplot(mpg) + 
   geom_point(aes(x = displ, y = hwy, colour = cty, size = cty)) +
+  scale_color_paletteer_c("gameofthrones::lannister") +
   guides(color = 'legend')
 ```
 
